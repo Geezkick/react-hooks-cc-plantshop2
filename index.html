@@ -4,10 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Plantsy App</title>
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS CDN with custom configuration -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          keyframes: {
+            slideIn: {
+              '0%': { transform: 'translateY(20px)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            bounce: {
+              '0%, 100%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.1)' },
+            },
+            pulse: {
+              '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+              '50%': { transform: 'scale(1.05)', opacity: '0.8' },
+            },
+          },
+          animation: {
+            'slide-in': 'slideIn 0.4s ease-out',
+            'fade-in': 'fadeIn 0.6s ease-in',
+            'bounce': 'bounce 0.3s ease-in-out',
+            'pulse': 'pulse 1.5s ease-in-out infinite',
+          },
+          colors: {
+            'plant-green': '#2f855a',
+            'plant-dark': '#1a4731',
+            'plant-light': '#e6fffa',
+          },
+        },
+      },
+      darkMode: 'class',
+    }
+  </script>
 </head>
-<body>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-300">
   <div id="root"></div>
 
   <!-- React and ReactDOM CDN -->
@@ -22,14 +60,22 @@
     // Search Component
     function Search({ search, onSearchChange }) {
       return (
-        <div className="mb-4">
+        <div className="mb-6 animate-slide-in relative">
           <input
             type="text"
             placeholder="Search plants..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-4 pl-12 border border-gray-300 dark:border-gray-700 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-plant-green bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition duration-300"
           />
+          <svg
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
       );
     }
@@ -39,6 +85,7 @@
       const [name, setName] = useState("");
       const [image, setImage] = useState("");
       const [price, setPrice] = useState("");
+      const [careLevel, setCareLevel] = useState("easy");
 
       function handleSubmit(e) {
         e.preventDefault();
@@ -49,21 +96,24 @@
           image: image.trim() || "https://via.placeholder.com/100",
           price: parseFloat(price) || 0,
           soldOut: false,
+          careLevel,
         };
         onAddPlant(newPlant);
         setName("");
         setImage("");
         setPrice("");
+        setCareLevel("easy");
       }
 
       return (
-        <div onClick={handleSubmit} className="mb-4 flex flex-col gap-2">
+        <div onClick={handleSubmit} className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl animate-slide-in">
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Add New Plant</h2>
           <input
             type="text"
             placeholder="Plant name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="p-2 border rounded"
+            className="w-full p-4 mb-4 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-plant-green bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition duration-300"
             required
           />
           <input
@@ -71,82 +121,314 @@
             placeholder="Image URL (optional)"
             value={image}
             onChange={(e) => setImage(e.target.value)}
-            className="p-2 border rounded"
+            className="w-full p-4 mb-4 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-plant-green bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition duration-300"
           />
           <input
             type="number"
             placeholder="Price (e.g., 19.99)"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            className="p-2 border rounded"
+            className="w-full p-4 mb-4 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-plant-green bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition duration-300"
             required
             step="0.01"
             min="0"
           />
+          <select
+            value={careLevel}
+            onChange={(e) => setCareLevel(e.target.value)}
+            className="w-full p-4 mb-4 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-plant-green bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition duration-300"
+          >
+            <option value="easy">Easy Care</option>
+            <option value="medium">Medium Care</option>
+            <option value="hard">Hard Care</option>
+          </select>
           <button
             type="submit"
-            className="p-2 bg-green-500 text-white rounded hover:bg-green-600"
+            className="w-full p-4 bg-plant-green text-white rounded-lg hover:bg-plant-dark transition duration-300 animate-bounce flex items-center justify-center gap-2"
           >
-            Add Plant
+            <span>🌱</span> Add Plant
           </button>
         </div>
       );
     }
 
     // PlantCard Component
-    function PlantCard({ plant, onToggleSoldOut, onDelete }) {
+    function PlantCard({ plant, onToggleSoldOut, onDelete, onAddToWishlist, onAddToCart, inWishlist, inCart }) {
       return (
-        <li className="flex justify-between items-center p-3 border rounded mb-2">
-          <div className="flex items-center gap-4">
+        <li className="flex justify-between items-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-4 hover:shadow-xl transition duration-300 animate-slide-in relative overflow-hidden">
+          <div className="flex items-center gap-6">
             <img
               src={plant.image}
               alt={plant.name}
-              className="w-16 h-16 object-cover rounded"
+              className="w-24 h-24 object-cover rounded-xl shadow-md"
               onError={(e) => (e.target.src = "https://via.placeholder.com/100")}
             />
             <div>
-              <h3 className="text-lg font-semibold">{plant.name}</h3>
-              <p>Price: ${plant.price.toFixed(2)}</p>
-              <p>Status: {plant.soldOut ? "Sold Out" : "Available"}</p>
+              <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{plant.name}</h3>
+              <p className="text-gray-600 dark:text-gray-400">Price: ${plant.price.toFixed(2)}</p>
+              <p className={`text-sm font-medium ${plant.soldOut ? 'text-red-500' : 'text-green-500'}`}>
+                Status: {plant.soldOut ? "Sold Out" : "Available"}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Care: {plant.careLevel.charAt(0).toUpperCase() + plant.careLevel.slice(1)}</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
+            <button
+              onClick={() => onAddToWishlist(plant.id)}
+              className={`p-3 ${inWishlist ? 'bg-yellow-600' : 'bg-yellow-500'} text-white rounded-lg hover:bg-yellow-700 transition duration-300 animate-bounce`}
+              disabled={plant.soldOut}
+            >
+              {inWishlist ? "In Wishlist" : "Add to Wishlist"}
+            </button>
+            <button
+              onClick={() => onAddToCart(plant.id)}
+              className={`p-3 ${inCart ? 'bg-green-600' : 'bg-green-500'} text-white rounded-lg hover:bg-green-700 transition duration-300 animate-bounce`}
+              disabled={plant.soldOut}
+            >
+              {inCart ? "In Cart" : "Add to Cart"}
+            </button>
             <button
               onClick={() => onToggleSoldOut(plant.id)}
-              className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 animate-bounce"
             >
               Toggle {plant.soldOut ? "Available" : "Sold Out"}
             </button>
             <button
               onClick={() => onDelete(plant.id)}
-              className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
+              className="p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-300 animate-bounce"
             >
               Delete
             </button>
           </div>
+          {plant.soldOut && (
+            <div className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+              SOLD OUT
+            </div>
+          )}
         </li>
+      );
+    }
+
+    // Wishlist Component
+    function Wishlist({ wishlist, plants, onRemoveFromWishlist, onAddToCart }) {
+      return (
+        <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl animate-slide-in">
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Wishlist 🌟</h2>
+          {wishlist.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400">Your wishlist is empty.</p>
+          ) : (
+            <ul className="list-none p-0">
+              {wishlist.map((plantId) => {
+                const plant = plants.find((p) => p.id === plantId);
+                if (!plant) return null;
+                return (
+                  <li key={plant.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-2">
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={plant.image}
+                        alt={plant.name}
+                        className="w-16 h-16 object-cover rounded-lg"
+                        onError={(e) => (e.target.src = "https://via.placeholder.com/100")}
+                      />
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">{plant.name}</h3>
+                        <p className="text-gray-600 dark:text-gray-400">${plant.price.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onAddToCart(plant.id)}
+                        className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300"
+                        disabled={plant.soldOut}
+                      >
+                        Add to Cart
+                      </button>
+                      <button
+                        onClick={() => onRemoveFromWishlist(plant.id)}
+                        className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      );
+    }
+
+    // Cart Component
+    function Cart({ cart, plants, onRemoveFromCart, onCheckout }) {
+      const total = cart.reduce((sum, plantId) => {
+        const plant = plants.find((p) => p.id === plantId);
+        return plant ? sum + plant.price : sum;
+      }, 0);
+
+      return (
+        <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl animate-slide-in">
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Cart 🛒</h2>
+          {cart.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400">Your cart is empty.</p>
+          ) : (
+            <>
+              <ul className="list-none p-0">
+                {cart.map((plantId) => {
+                  const plant = plants.find((p) => p.id === plantId);
+                  if (!plant) return null;
+                  return (
+                    <li key={plant.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-2">
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={plant.image}
+                          alt={plant.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                          onError={(e) => (e.target.src = "https://via.placeholder.com/100")}
+                        />
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">{plant.name}</h3>
+                          <p className="text-gray-600 dark:text-gray-400">${plant.price.toFixed(2)}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onRemoveFromCart(plant.id)}
+                        className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="mt-4 flex justify-between items-center">
+                <p className="text-xl font-semibold text-gray-800 dark:text-gray-100">Total: ${total.toFixed(2)}</p>
+                <button
+                  onClick={onCheckout}
+                  className="p-3 bg-plant-green text-white rounded-lg hover:bg-plant-dark transition duration-300 animate-bounce"
+                  disabled={cart.length === 0}
+                >
+                  Checkout
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    // CheckoutModal Component
+    function CheckoutModal({ isOpen, onClose, cart, plants, onConfirm }) {
+      if (!isOpen) return null;
+
+      const total = cart.reduce((sum, plantId) => {
+        const plant = plants.find((p) => p.id === plantId);
+        return plant ? sum + plant.price : sum;
+      }, 0);
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full">
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Checkout</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Total: ${total.toFixed(2)}</p>
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Card Number"
+                className="w-full p-4 mb-4 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-plant-green bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition duration-300"
+              />
+              <div className="flex gap-4">
+                <input
+                  type="text"
+                  placeholder="MM/YY"
+                  className="w-1/2 p-4 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-plant-green bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition duration-300"
+                />
+                <input
+                  type="text"
+                  placeholder="CVC"
+                  className="w-1/2 p-4 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-plant-green bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition duration-300"
+                />
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={onClose}
+                className="p-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-300 flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onConfirm}
+                className="p-3 bg-plant-green text-white rounded-lg hover:bg-plant-dark transition duration-300 flex-1"
+              >
+                Confirm Payment
+              </button>
+            </div>
+          </div>
+        </div>
       );
     }
 
     // App Component
     function App() {
-      const [plants, setPlants] = useState([
-        {
-          id: 1,
-          name: "Monstera Deliciosa",
-          image: "https://via.placeholder.com/100?text=Monstera",
-          price: 29.99,
-          soldOut: false,
-        },
-        {
-          id: 2,
-          name: "Fiddle Leaf Fig",
-          image: "https://via.placeholder.com/100?text=Fiddle+Leaf",
-          price: 49.99,
-          soldOut: true,
-        },
-      ]);
+      const [plants, setPlants] = useState(() => {
+        const savedPlants = localStorage.getItem("plants");
+        return savedPlants
+          ? JSON.parse(savedPlants)
+          : [
+              {
+                id: 1,
+                name: "Monstera Deliciosa",
+                image: "https://via.placeholder.com/100?text=Monstera",
+                price: 29.99,
+                soldOut: false,
+                careLevel: "medium",
+              },
+              {
+                id: 2,
+                name: "Fiddle Leaf Fig",
+                image: "https://via.placeholder.com/100?text=Fiddle+Leaf",
+                price: 49.99,
+                soldOut: true,
+                careLevel: "hard",
+              },
+            ];
+      });
       const [search, setSearch] = useState("");
+      const [sortBy, setSortBy] = useState("name");
+      const [isDarkMode, setIsDarkMode] = useState(() => {
+        return localStorage.getItem("darkMode") === "true";
+      });
+      const [wishlist, setWishlist] = useState(() => {
+        const savedWishlist = localStorage.getItem("wishlist");
+        return savedWishlist ? JSON.parse(savedWishlist) : [];
+      });
+      const [cart, setCart] = useState(() => {
+        const savedCart = localStorage.getItem("cart");
+        return savedCart ? JSON.parse(savedCart) : [];
+      });
+      const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+      useEffect(() => {
+        localStorage.setItem("plants", JSON.stringify(plants));
+      }, [plants]);
+
+      useEffect(() => {
+        localStorage.setItem("darkMode", isDarkMode);
+        if (isDarkMode) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      }, [isDarkMode]);
+
+      useEffect(() => {
+        localStorage.setItem("wishlist", JSON.stringify(wishlist));
+      }, [wishlist]);
+
+      useEffect(() => {
+        localStorage.setItem("cart", JSON.stringify(cart));
+      }, [cart]);
 
       function handleAddPlant(newPlant) {
         setPlants([...plants, newPlant]);
@@ -162,27 +444,116 @@
 
       function handleDeletePlant(id) {
         setPlants(plants.filter((plant) => plant.id !== id));
+        setWishlist(wishlist.filter((plantId) => plantId !== id));
+        setCart(cart.filter((plantId) => plantId !== id));
       }
 
-      const displayedPlants = plants.filter((plant) =>
+      function handleAddToWishlist(id) {
+        if (!wishlist.includes(id)) {
+          setWishlist([...wishlist, id]);
+        }
+      }
+
+      function handleRemoveFromWishlist(id) {
+        setWishlist(wishlist.filter((plantId) => plantId !== id));
+      }
+
+      function handleAddToCart(id) {
+        if (!cart.includes(id)) {
+          setCart([...cart, id]);
+        }
+      }
+
+      function handleRemoveFromCart(id) {
+        setCart(cart.filter((plantId) => plantId !== id));
+      }
+
+      function handleCheckout() {
+        setIsCheckoutOpen(true);
+      }
+
+      function handleConfirmCheckout() {
+        setCart([]);
+        setIsCheckoutOpen(false);
+        alert("Payment successful! Your order has been placed.");
+      }
+
+      const sortedPlants = [...plants].sort((a, b) => {
+        if (sortBy === "name") return a.name.localeCompare(b.name);
+        if (sortBy === "price") return a.price - b.price;
+        if (sortBy === "careLevel") return a.careLevel.localeCompare(b.careLevel);
+        return 0;
+      });
+
+      const displayedPlants = sortedPlants.filter((plant) =>
         plant.name.toLowerCase().includes(search.toLowerCase())
       );
 
       return (
-        <div className="max-w-2xl mx-auto p-4">
-          <h1 className="text-3xl font-bold text-center mb-4">🌿 Plantsy 🌱</h1>
-          <Search search={search} onSearchChange={setSearch} />
+        <div className="max-w-4xl mx-auto p-8 bg-gradient-to-b from-plant-light to-white dark:from-gray-900 dark:to-gray-800 min-h-screen animate-fade-in">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-5xl font-extrabold text-center text-plant-dark dark:text-plant-light flex items-center gap-3">
+              <span>🌿</span> Plantsy <span>🌱</span>
+            </h1>
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-3 bg-gray-200 dark:bg-gray-700 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-300"
+            >
+              {isDarkMode ? "☀️" : "🌙"}
+            </button>
+          </div>
+          <div className="flex gap-4 mb-6">
+            <Search search={search} onSearchChange={setSearch} />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="p-4 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-plant-green bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition duration-300"
+            >
+              <option value="name">Sort by Name</option>
+              <option value="price">Sort by Price</option>
+              <option value="careLevel">Sort by Care Level</option>
+            </select>
+          </div>
+          <Wishlist
+            wishlist={wishlist}
+            plants={plants}
+            onRemoveFromWishlist={handleRemoveFromWishlist}
+            onAddToCart={handleAddToCart}
+          />
+          <Cart
+            cart={cart}
+            plants={plants}
+            onRemoveFromCart={handleRemoveFromCart}
+            onCheckout={handleCheckout}
+          />
           <PlantForm onAddPlant={handleAddPlant} />
           <ul className="list-none p-0">
-            {displayedPlants.map((plant) => (
-              <PlantCard
-                key={plant.id}
-                plant={plant}
-                onToggleSoldOut={handleToggleSoldOut}
-                onDelete={handleDeletePlant}
-              />
-            ))}
+            {displayedPlants.length > 0 ? (
+              displayedPlants.map((plant) => (
+                <PlantCard
+                  key={plant.id}
+                  plant={plant}
+                  onToggleSoldOut={handleToggleSoldOut}
+                  onDelete={handleDeletePlant}
+                  onAddToWishlist={handleAddToWishlist}
+                  onAddToCart={handleAddToCart}
+                  inWishlist={wishlist.includes(plant.id)}
+                  inCart={cart.includes(plant.id)}
+                />
+              ))
+            ) : (
+              <li className="text-center text-gray-500 dark:text-gray-400 animate-pulse">
+                No plants found. Try adding some! 🌱
+              </li>
+            )}
           </ul>
+          <CheckoutModal
+            isOpen={isCheckoutOpen}
+            onClose={() => setIsCheckoutOpen(false)}
+            cart={cart}
+            plants={plants}
+            onConfirm={handleConfirmCheckout}
+          />
         </div>
       );
     }
